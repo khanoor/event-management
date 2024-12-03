@@ -30,93 +30,89 @@ class _HomeScreenState extends State<HomeScreen> {
     final isEventAvailable = eventProvider.events.isNotEmpty;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Select Date',
-          style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: AppColor.whiteColor),
-        ),
-        centerTitle: true,
-        backgroundColor: AppColor.tealColor,
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                CustomButton(
-                  title: dateProvider.selectedYear.isEmpty
-                      ? 'Select Year'
-                      : dateProvider.selectedYear,
-                  onPressed: () => _showYearSelector(context),
-                ),
-                CustomButton(
-                  title: dateProvider.selectedMonth.isEmpty
-                      ? 'Select Month'
-                      : dateProvider.selectedMonth,
-                  onPressed: () => _showMonthSelector(context),
-                ),
-              ],
-            ),
+        appBar: AppBar(
+          title: const Text(
+            'Select Date',
+            style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: AppColor.whiteColor),
           ),
-          if (!isDateSelected)
-            const Center(
-              child: Icon(Icons.calendar_today,
-                  size: 100, color: AppColor.tealColor),
-            ),
-          if (isDateSelected)
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: _buildCalendar(dateProvider.selectedYear,
-                    dateProvider.selectedMonth, dateProvider),
+          centerTitle: true,
+          backgroundColor: AppColor.tealColor,
+        ),
+        body: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  CustomButton(
+                      title: dateProvider.selectedYear.isEmpty
+                          ? 'Select Year'
+                          : dateProvider.selectedYear,
+                      onPressed: () => _showYearSelector(context)),
+                  CustomButton(
+                      title: dateProvider.selectedMonth.isEmpty
+                          ? 'Select Month'
+                          : dateProvider.selectedMonth,
+                      onPressed: () => _showMonthSelector(context)),
+                ],
               ),
             ),
-          if (!isEventAvailable)
-            const Center(
-              child: Text('No Event Available', style: TextStyle(fontSize: 18)),
-            ),
-          if (isEventAvailable)
-            Expanded(
-              child: ListView.builder(
+            if (!isDateSelected)
+              const Center(
+                child: Icon(Icons.calendar_today,
+                    size: 100, color: AppColor.tealColor),
+              ),
+            if (isDateSelected)
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: _buildCalendar(dateProvider.selectedYear,
+                      dateProvider.selectedMonth, dateProvider),
+                ),
+              ),
+            if (!isEventAvailable)
+              const Center(
+                child:
+                    Text('No Event Available', style: TextStyle(fontSize: 18)),
+              ),
+            if (isEventAvailable)
+              Expanded(
+                  child: ListView.builder(
                 itemCount: eventProvider.events.length,
                 itemBuilder: (BuildContext context, int index) {
                   final event = eventProvider.events[index];
                   return Card(
-                    margin: const EdgeInsets.symmetric(
-                        vertical: 8.0, horizontal: 16.0),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10.0),
-                    ),
-                    elevation: 4.0,
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.all(16.0),
-                      title: Text(
-                        event['eventName'] ?? '',
-                        style: const TextStyle(
-                          fontSize: 18.0,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      margin: const EdgeInsets.symmetric(
+                          vertical: 8.0, horizontal: 16.0),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10.0),
                       ),
-                      subtitle: Text(
-                        '${event['selectedDate'] ?? ''} ${event['selectedMonth'] ?? ''} ${event['selectedYear'] ?? ''} ',
-                        style: const TextStyle(
-                          fontSize: 16.0,
-                          color: Colors.grey,
+                      elevation: 4.0,
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.all(16.0),
+                        title: Text(
+                          event['eventName'] ?? '',
+                          style: const TextStyle(
+                            fontSize: 18.0,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                    ),
-                  );
+                        subtitle: Text(
+                          '${event['selectedDate'] ?? ''} ${event['selectedMonth'] ?? ''} ${event['selectedYear'] ?? ''} ',
+                          style: const TextStyle(
+                            fontSize: 16.0,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ));
                 },
-              ),
-            ),
-        ],
-      ),
-    );
+              ))
+          ],
+        ));
   }
 
   void _showYearSelector(BuildContext context) {
@@ -226,6 +222,8 @@ class _HomeScreenState extends State<HomeScreen> {
           List<int?>.filled(startDayOfWeek - 1, null) +
               daysInMonth.map((e) => e as int?).toList();
 
+      final eventProvider = Provider.of<EventProvider>(context, listen: false);
+
       return Column(
         children: [
           const Row(
@@ -244,7 +242,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: GridView.builder(
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 7,
-                crossAxisSpacing: 4.0,
+                crossAxisSpacing: 2.0,
                 mainAxisSpacing: 4.0,
               ),
               itemCount: calendarDays.length,
@@ -253,6 +251,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 if (day == null) {
                   return const SizedBox.shrink();
                 }
+
+                // Find event for the current day
+                final event = eventProvider.events.firstWhere(
+                  (event) =>
+                      event['selectedDate'] == day.toString() &&
+                      event['selectedMonth'] == month &&
+                      event['selectedYear'] == year,
+                  orElse: () => {},
+                );
+
                 return GestureDetector(
                   onTap: () {
                     if (dateProvider.selectedMonth.toString() ==
@@ -282,13 +290,28 @@ class _HomeScreenState extends State<HomeScreen> {
                       borderRadius: BorderRadius.circular(8.0),
                     ),
                     child: Center(
-                      child: Text(
-                        day.toString(),
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: AppColor.whiteColor,
-                        ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            day.toString(),
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: AppColor.whiteColor,
+                            ),
+                          ),
+                          Text(
+                            (event['eventName'] != null &&
+                                    event['eventName']!.length >= 4)
+                                ? event['eventName']!.substring(0, 4)
+                                : event['eventName'] ?? '',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: AppColor.blackColor,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
